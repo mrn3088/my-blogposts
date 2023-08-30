@@ -1,0 +1,107 @@
+---
+title: "Weekly Contest 359"
+date: "2023-04-28"
+tags: ["next.js", "nextjs", "new"]
+---
+
+Attended leetcode weekly contest 359. Completed 4/4. Rank 541/27133. My first time in top 2% in weekly contest.
+
+<CustomImage
+  src="https://raw.githubusercontent.com/mrn3088/my-blogposts/main/images/08-20-23-pic1.png"
+  alt="Ranking"
+/>
+
+
+Here are my solutions for each problem.
+
+## 1. [Check if a String Is an Acronym of Words](https://leetcode.com/contest/weekly-contest-359/problems/check-if-a-string-is-an-acronym-of-words/)
+I'm a fan of one-liner. 
+
+```python3
+class Solution:
+    def isAcronym(self, words: List[str], s: str) -> bool:
+        return "".join([w[0] for w in words]) == s
+```
+
+## 2. [Determine the Minimum Sum of a k-avoiding Array](https://leetcode.com/contest/weekly-contest-359/problems/determine-the-minimum-sum-of-a-k-avoiding-array/)
+
+```cpp
+class Solution {
+public:
+    int minimumSum(int n, int k) {
+        int res = 0;
+        int remain = n;
+        for (int i = 1; i <= k / 2 && remain; i++) {
+            res += i;
+            remain--;
+        }
+        int curr = k;
+        while (remain) {
+            res += curr;
+            curr++;
+            remain--;
+            
+        }
+        return res;
+    }
+};
+```
+
+## 3. [Maximize the Profit as the Salesman](https://leetcode.com/contest/weekly-contest-359/problems/maximize-the-profit-as-the-salesman/)
+
+```cpp 
+class Solution {
+public:
+    int maximizeTheProfit(int n, vector<vector<int>>& offers) {
+        sort(offers.begin(), offers.end(), [](const auto& a, const auto& b) {
+            return a[1] < b[1];
+        });
+        vector<int> dp(offers.size() + 1, 0);
+        map<int, int> mp;
+        mp[-1] = -1;
+        for (int i = 0; i < offers.size(); i++) {
+            int idx = prev(mp.lower_bound(offers[i][0])) -> second;
+            dp[i + 1] = max(dp[i], dp[idx + 1] + offers[i][2]);
+            mp[offers[i][1]] = i;
+        }
+        return dp.back();
+    }
+};
+```
+
+## 4. [Find the Longest Equal Subarray](https://leetcode.com/contest/weekly-contest-359/problems/find-the-longest-equal-subarray/)
+
+```cpp 
+class Solution {
+public:
+    int solve(const vector<int>& indices, int k) {
+        deque<int> dq;
+        size_t res = 0;
+        int cost = 0;
+        for (int i = 0; i < indices.size(); i++) {
+            if (!dq.empty()) {
+                cost += indices[i] - dq.back() - 1;
+            }  
+            dq.push_back(indices[i]);
+
+            while (cost > k) {
+                int polled = dq.front(); dq.pop_front();
+                cost -= dq.front() - polled - 1;
+            }
+            res = max(res, dq.size());
+        }
+        return res;
+    }
+    int longestEqualSubarray(vector<int>& nums, int k) {
+        unordered_map<int, vector<int>> series;
+        for (int i = 0; i < nums.size(); i++) {
+            series[nums[i]].push_back(i);
+        }
+        int res = 0;
+        for (const auto& [num, indices] : series) {
+            res = max(res, solve(indices, k));
+        }
+        return res;
+    }
+};
+```
