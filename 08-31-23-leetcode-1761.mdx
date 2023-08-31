@@ -1,0 +1,128 @@
+---
+title: 'A Nice Leetcode Problem Illustrates Constant Time Optimizations in Algorithmic Complexity'
+date: '2023-08-31'
+tags: ['LeetCode','algorithms','C++']
+hidden: false
+---
+
+Today's LeetCode daily challenge in (leetcode.cn)[leetcode.cn] is an interesting one. 
+
+<CustomImage
+  src="https://raw.githubusercontent.com/mrn3088/my-blogposts/main/images/08-31-23-pic1.png"
+  alt="Minimum Degree of a Connected Trio in a Graph"
+/>
+
+<CustomImage
+  src="https://raw.githubusercontent.com/mrn3088/my-blogposts/main/images/08-31-23-pic2.png"
+  alt="Minimum Degree of a Connected Trio in a Graph"
+/>
+
+It worth to notice that `2 <= n <= 400`, so we can use n^3 time complexity algorithm to solve it.  
+The idea would be: 
+- enumerate all possible tuples (i, j, k) where i, j, k are different vertices, check whether they form a connected trio, and update the minimum degree.
+- To enumerate we must need `n^3` time, while to check for connected trio we only need constant time if built an Adjacency Matrix.  
+
+So without too much doubt I submitted my version one...and got an TLE :(
+
+```cpp
+class Solution {
+public:
+    int minTrioDegree(int n, vector<vector<int>>& edges) {
+        vector<unordered_set<int>> graph(n);
+        for (const auto& edge : edges) {
+            graph[edge[0] - 1].insert(edge[1] - 1);
+            graph[edge[1] - 1].insert(edge[0] - 1);
+        }
+        size_t res = INT_MAX;
+        for (int i = 0; i < n; i++) {
+            for (const auto j : graph[i]) {
+                for (const auto k : graph[j]) {
+                    if (i != k && graph[i].count(k)) {
+                        res = min(res, graph[i].size() + graph[j].size() + graph[k].size() - 6);
+                    }
+                }
+            }
+        }
+        return res == INT_MAX ? -1 : res;
+    }
+};
+```
+<CustomImage
+  src="https://raw.githubusercontent.com/mrn3088/my-blogposts/main/images/08-20-23-pic3.png"
+  alt="TLE Picture"
+/>
+
+Let's take a look at the time complexity of this algorithm. 
+
+- The first for loop is `O(n)`, the second for loop is `O(n)`, the third for loop is `O(n)`, and the `count` operation is `O(1)`. So the total time complexity is `O(n^3)`. Sounds good, right?
+
+However, when `n <= 400`,  n^3 could reach 64,000,000, which is at the edge of the time limit. Remember, number of operations for C++ is at maximum around 1^8 in algorithmic problems. So we need to be careful for this number. 
+
+In the worse case, each of the three for loop will iterate `n - 1` times. Besides, iterating through an `unordered_map` is depending on the number of buckets, not number of elements. So we can optimize it through the following: 
+
+```cpp
+class Solution {
+public:
+    int minTrioDegree(int n, vector<vector<int>>& edges) {
+        vector<unordered_set<int>> graph(n);
+        for (const auto& edge : edges) {
+            graph[edge[0] - 1].insert(edge[1] - 1);
+            graph[edge[1] - 1].insert(edge[0] - 1);
+        }
+        size_t res = INT_MAX;
+        for (int i = 0; i < n; i++) {
+            for (int j = i + 1; j < n; j++) {
+                if (!graph[i].count(j)) continue;
+                for (int k = j + 1; k < n; k++) {
+                    if (graph[i].count(k) && graph[j].count(k)) {
+                        res = min(res, graph[i].size() + graph[j].size() + graph[k].size() - 6);
+                    }
+                }
+            }
+        }
+        return res == INT_MAX ? -1 : res;
+    }
+};
+```
+
+Now, even though the asymptotic complexity is still `n^3`, we indeed decreased number of operations. Thus passed the last test case. 
+
+<CustomImage
+  src="https://raw.githubusercontent.com/mrn3088/my-blogposts/main/images/08-20-23-pic4.png"
+  alt="V2"
+/>
+
+Notice that the `unordered_map` is could also be optimized so that we can guarantee a O(1) lookup: 
+
+```cpp
+class Solution {
+public:
+    int minTrioDegree(int n, vector<vector<int>>& edges) {
+        vector<vector<int>> d(n, vector<int>(n));
+        vector<int> deg(n);
+        for (auto &e : edges) {
+            d[e[0] - 1][e[1] - 1] = d[e[1] - 1][e[0] - 1] = true;
+            deg[e[0] - 1]++;
+            deg[e[1] - 1]++;
+        }
+        int ans = INT_MAX;
+        for (int i = 0; i < n; ++i)
+            for (int j = i + 1; j < n; ++j) {
+                if (!d[i][j])
+                    continue;
+                for (int k = j + 1; k < n; ++k) {
+                    if (d[i][k] && d[j][k]) 
+                        ans = min(ans, deg[i] + deg[j] + deg[k] - 6);
+                }
+            }
+        return ans == INT_MAX ? -1 : ans;
+    }
+};
+
+```
+
+
+<CustomImage
+  src="https://raw.githubusercontent.com/mrn3088/my-blogposts/main/images/08-20-23-pic4.png"
+  alt="V3"
+/>
